@@ -15,6 +15,8 @@ use portfolio::model::{Holding, Item, ModelError, Portfolio};
 use portfolio::show::show_portfolio;
 use portfolio::watch::watch_portfolio;
 
+const DEFAULT_CURRENCY: &'static str = "USD";
+
 #[derive(Debug)]
 enum Command {
     Show,
@@ -36,7 +38,7 @@ fn main() {
     if let Command::None = cmd {
         println!("Pick a [valid] command");
     } else {
-        let default_currency = with_code("USD").unwrap();
+        let default_currency = with_code(DEFAULT_CURRENCY).unwrap();
 
         if let Some(portfolio) = get_portfolio() {
             match cmd {
@@ -267,8 +269,15 @@ fn get_portfolio() -> Option<Portfolio> {
                 default_currency: with_code("USD"),
                 items: vec![
                     Item::Watch("AAPL".to_string()),
-                    Item::Watch("AMZN".to_string()),
                     Item::Watch("MSFT".to_string()),
+                    Item::Price("AMZN".to_string(), Holding {
+                        quantity: 1,
+                        purchase_price: Money::of_major_minor(
+                            with_code(DEFAULT_CURRENCY).unwrap(),
+                            1800,
+                            50),
+                        purchase_date: Some(Local::today().naive_local())
+                    }),
                 ],
             };
             match model::write_file(None, &example) {

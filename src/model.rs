@@ -9,6 +9,8 @@ use toml;
 
 use fin_model::prelude::*;
 
+use crate::display::DATE_FMT;
+
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
@@ -45,8 +47,8 @@ pub struct Holding {
 
 #[derive(Deserialize, Serialize, Clone)]
 struct SerializedMoney {
-    pub major: i32,
-    pub minor: i32,
+    pub currency_major: i32,
+    pub currency_minor: i32,
     pub currency_code: String,
 }
 
@@ -55,8 +57,9 @@ struct SerializedHolding {
     pub symbol: Symbol,
     pub watch_only: bool,
     pub quantity: Option<u32>,
+    #[serde(flatten)]
     pub purchase_price: Option<SerializedMoney>,
-    pub purchase_date: Option<Date>,
+    pub purchase_date: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -108,13 +111,19 @@ pub fn read_file(file_name: Option<String>) -> Result<Portfolio, ModelError> {
                     let purchase_price = holding.clone().purchase_price.unwrap();
                     let currency: Currency = with_code(&purchase_price.currency_code).unwrap();
                     let price =
-                        Money::of_major_minor(currency, purchase_price.major, purchase_price.minor);
+                        Money::of_major_minor(currency, purchase_price.currency_major, purchase_price.currency_minor);
                     Item::Price(
                         holding.symbol.to_string(),
                         Holding {
                             quantity: holding.quantity.unwrap(),
                             purchase_price: price,
-                            purchase_date: holding.purchase_date,
+                            purchase_date: match &holding.purchase_date {
+                                Some(date) => match Date::parse_from_str(&date, DATE_FMT) {
+                                    Ok(d) => Some(d),
+                                    _ => None,
+                                },
+                                _ => None,
+                            },
                         },
                     )
                 }
@@ -148,11 +157,14 @@ pub fn write_file(file_name: Option<String>, portfolio: &Portfolio) -> Result<()
                     watch_only: false,
                     quantity: Some(holding.quantity),
                     purchase_price: Some(SerializedMoney {
-                        major: holding.purchase_price.major_part(),
-                        minor: holding.purchase_price.minor_part(),
+                        currency_major: holding.purchase_price.major_part(),
+                        currency_minor: holding.purchase_price.minor_part(),
                         currency_code: holding.purchase_price.currency.code(),
                     }),
-                    purchase_date: holding.purchase_date,
+                    purchase_date: match &holding.purchase_date {
+                        Some(date) => Some(date.format(DATE_FMT).to_string()),
+                        _ => None,
+                    }
                 },
             })
             .collect(),
