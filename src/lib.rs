@@ -13,6 +13,10 @@ extern crate toml;
 // Public Modules/Exports
 // ------------------------------------------------------------------------------------------------
 
+pub mod display;
+
+pub mod holdings;
+
 pub mod model;
 
 pub mod show;

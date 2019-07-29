@@ -22,15 +22,17 @@ FLAGS:
     -V, --version    Prints version information
 
 SUBCOMMANDS:
-    add       Add a symbol to the portfolio
-    delete    Delete a symbol from the portfolio
-    help      Prints this message or the help of the given subcommand(s)
-    show      Show quotes for all portfolio
-    watch     Watch quotes for portfolio
+    add         Add a symbol to the portfolio
+    delete      Delete a symbol from the portfolio
+    help        Prints this message or the help of the given subcommand(s)
+    holdings    Show all holdings in current portfolio
+    show        Show quotes for all portfolio symbols
+    watch       Watch quotes for portfolio symbols
 ```
 
 Local portfolio file commands:
 
+* **holdings** - show all the holdings in the local portfolio file.
 * **add** - add a new holding to the local portfolio file.
 * **delete** - remove a holding from the local portfolio file.
 

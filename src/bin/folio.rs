@@ -7,17 +7,21 @@ use fin_model::provider::Provider;
 use fin_iex::IEXProvider;
 use steel_cent::currency::with_code;
 
+use portfolio::holdings::show_holdings;
 use portfolio::model;
 use portfolio::model::{Holding, Item, ModelError, Portfolio};
-use portfolio::show;
-use portfolio::watch;
+use portfolio::show::show_portfolio;
+use portfolio::watch::watch_portfolio;
 
 #[derive(Debug)]
 enum Command {
     Show,
     Watch,
+
+    Holdings,
     Add(Symbol, Option<String>, Option<String>),
     Remove(Symbol),
+
     None,
 }
 
@@ -48,13 +52,15 @@ fn main() {
                     };
 
                     match cmd {
-                        Command::Show => show::show_portfolio(portfolio, provider),
-                        Command::Watch => watch::watch_portfolio(portfolio),
+                        Command::Show => show_portfolio(portfolio, provider),
+                        Command::Watch => watch_portfolio(portfolio),
                         _ => (),
                     }
                 },
-                Command::Add(_, _, _) | Command::Remove(_) => {
+                Command::Holdings | Command::Add(_, _, _) | Command::Remove(_) => {
                     match cmd {
+                        Command::Holdings =>
+                            show_holdings(portfolio),
                         Command::Add(s, p, q) => {
                             let p = match p {
                                 Some(p) => {
@@ -89,8 +95,9 @@ fn main() {
                             let new_item = Item::Price(
                                 s,
                                 Holding {
-                                    purchase_price: p,
                                     quantity: q,
+                                    purchase_price: p,
+                                    purchase_date: None,
                                 }
                             );
                             let new_portfolio = Portfolio {
@@ -143,11 +150,11 @@ fn handle_args() -> Command {
         .version("v1.0-pre")
         .subcommand(
             SubCommand::with_name("show")
-                .about("Show quotes for all portfolio")
+                .about("Show quotes for all portfolio symbols")
         )
         .subcommand(
             SubCommand::with_name("watch")
-                .about("Watch quotes for portfolio")
+                .about("Watch quotes for portfolio symbols")
                 .arg(
                     Arg::with_name("delay")
                         .short("d")
@@ -155,6 +162,10 @@ fn handle_args() -> Command {
                         .takes_value(true)
                         .help("Delay between refreshes"),
                 )
+        )
+        .subcommand(
+            SubCommand::with_name("holdings")
+                .about("Show all holdings in current portfolio")
         )
         .subcommand(
             SubCommand::with_name("add")
@@ -195,6 +206,8 @@ fn handle_args() -> Command {
     match matches.subcommand() {
         ("show", Some(_)) => Command::Show,
         ("watch", Some(_)) => Command::Watch,
+
+        ("holdings", Some(_)) => Command::Holdings,
         ("add", Some(matches)) => Command::Add(
             matches.value_of("symbol").unwrap().to_string(),
             match matches.value_of("price") {
@@ -209,6 +222,7 @@ fn handle_args() -> Command {
         ("delete", Some(matches)) => Command::Remove(
             matches.value_of("symbol").unwrap().to_string()
         ),
+
         _ => {
             Command::None
         }

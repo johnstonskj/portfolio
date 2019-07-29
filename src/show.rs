@@ -2,11 +2,10 @@ use std::collections::HashMap;
 
 use fin_model::prelude::*;
 use fin_model::quote::{FetchPriceQuote, Quote};
-use num_format::{SystemLocale, ToFormattedString};
-use prettytable::{Attr, Cell, color, Table};
-use prettytable::format::Alignment;
-use steel_cent::formatting::us_style;
+use num_format::SystemLocale;
+use prettytable::{Attr, Table};
 
+use crate::display::*;
 use crate::model::{Item, Portfolio};
 
 pub fn show_portfolio<T: FetchPriceQuote>(portfolio: Portfolio, provider: T) {
@@ -67,65 +66,3 @@ fn add_item(table: &mut Table, item: &Item, quote: &Quote, locale: &SystemLocale
             price_cell((quote.data.latest.price - h.purchase_price) * h.quantity as i32).with_style(Attr::Bold)]),
     };
 }
-
-fn item_symbol(item: &Item) -> String {
-    match item {
-        Item::Watch(s) | Item::Price(s, _) => s.to_string(),
-    }
-}
-
-fn default_cell() -> Cell {
-    Cell::new_align("-", Alignment::CENTER)
-}
-
-fn change_cell(quote: &Quote) -> Cell {
-    match (quote.data.latest.change, quote.data.latest.percentage) {
-        (Some(change), Some(percent)) => {
-            let change_str = if change.major_part().is_positive() {
-                format!("{}", us_style().display_for(&change))
-            } else {
-                format!("{}", us_style().display_for(&change))
-            };
-            let value = format!(
-                "{} {}{}%",
-                change_str,
-                if change.minor_amount().is_positive() {
-                    "↑"
-                } else {
-                    "↓"
-                },
-                percent.abs(),
-            );
-            if change.minor_amount().is_positive() {
-                Cell::new_align(&value, Alignment::RIGHT)
-                    .with_style(Attr::ForegroundColor(color::GREEN))
-            } else {
-                Cell::new_align(&value, Alignment::RIGHT)
-                    .with_style(Attr::ForegroundColor(color::RED))
-            }
-        },
-        (_, _) => default_cell()
-    }
-}
-
-fn price_cell(m: Money) -> Cell {
-    Cell::new_align(&format!("{}", us_style().display_for(&m)), Alignment::RIGHT)
-}
-
-fn number_cell(i: i64, locale: &SystemLocale) -> Cell {
-    Cell::new_align(&i.to_formatted_string(locale), Alignment::RIGHT)
-}
-
-fn price_cell_or(m: Option<Money>, default: Cell) -> Cell {
-    match m {
-        Some(v) => price_cell(v),
-        None => default,
-    }
-}
-fn number_cell_or(i: Option<u64>, locale: &SystemLocale, default: Cell) -> Cell {
-    match i {
-        Some(v) => number_cell(v as i64, locale),
-        None => default,
-    }
-}
-

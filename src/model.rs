@@ -36,6 +36,7 @@ pub enum Item {
 pub struct Holding {
     pub quantity: u32,
     pub purchase_price: Money,
+    pub purchase_date: Option<Date>,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -55,6 +56,7 @@ struct SerializedHolding {
     pub watch_only: bool,
     pub quantity: Option<u32>,
     pub purchase_price: Option<SerializedMoney>,
+    pub purchase_date: Option<Date>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -112,6 +114,7 @@ pub fn read_file(file_name: Option<String>) -> Result<Portfolio, ModelError> {
                         Holding {
                             quantity: holding.quantity.unwrap(),
                             purchase_price: price,
+                            purchase_date: None,
                         },
                     )
                 }
@@ -138,6 +141,7 @@ pub fn write_file(file_name: Option<String>, portfolio: &Portfolio) -> Result<()
                     watch_only: true,
                     quantity: None,
                     purchase_price: None,
+                    purchase_date: None,
                 },
                 Item::Price(symbol, holding) => SerializedHolding {
                     symbol: symbol.to_string(),
@@ -148,6 +152,7 @@ pub fn write_file(file_name: Option<String>, portfolio: &Portfolio) -> Result<()
                         minor: holding.purchase_price.minor_part(),
                         currency_code: holding.purchase_price.currency.code(),
                     }),
+                    purchase_date: None,
                 },
             })
             .collect(),
