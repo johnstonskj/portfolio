@@ -5,6 +5,7 @@ use fin_model::quote::{FetchPriceQuote, Quote};
 use num_format::{SystemLocale, ToFormattedString};
 use prettytable::{Attr, Cell, color, Table};
 use prettytable::format::Alignment;
+use steel_cent::formatting::us_style;
 
 use crate::model::{Item, Portfolio};
 
@@ -63,7 +64,7 @@ fn add_item(table: &mut Table, item: &Item, quote: &Quote, locale: &SystemLocale
             price_cell(h.purchase_price).with_style(Attr::Bold),
             number_cell(h.quantity as i64, &locale).with_style(Attr::Bold),
             // (quote.data.latest.price - h.purchase_price) * h.quantity
-            default_cell().with_style(Attr::Bold)]),
+            price_cell((quote.data.latest.price - h.purchase_price) * h.quantity as i32).with_style(Attr::Bold)]),
     };
 }
 
@@ -81,12 +82,12 @@ fn change_cell(quote: &Quote) -> Cell {
     match (quote.data.latest.change, quote.data.latest.percentage) {
         (Some(change), Some(percent)) => {
             let change_str = if change.major_part().is_positive() {
-                format!("+{}", change)
+                format!("{}", us_style().display_for(&change))
             } else {
-                format!("{}", change)
+                format!("{}", us_style().display_for(&change))
             };
             let value = format!(
-                "{} ({}{}%)",
+                "{} {}{}%",
                 change_str,
                 if change.minor_amount().is_positive() {
                     "↑"
@@ -108,7 +109,7 @@ fn change_cell(quote: &Quote) -> Cell {
 }
 
 fn price_cell(m: Money) -> Cell {
-    Cell::new_align(&format!("{}", m), Alignment::RIGHT)
+    Cell::new_align(&format!("{}", us_style().display_for(&m)), Alignment::RIGHT)
 }
 
 fn number_cell(i: i64, locale: &SystemLocale) -> Cell {
