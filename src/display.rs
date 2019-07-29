@@ -8,6 +8,8 @@ use steel_cent::formatting::{format, us_style};
 
 use crate::model::Item;
 
+pub const DATE_FMT: &'static str = "%Y-%m-%d";
+
 pub fn bold(cell: Cell) -> Cell {
     cell.with_style(Attr::Bold)
 }

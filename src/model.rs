@@ -114,7 +114,7 @@ pub fn read_file(file_name: Option<String>) -> Result<Portfolio, ModelError> {
                         Holding {
                             quantity: holding.quantity.unwrap(),
                             purchase_price: price,
-                            purchase_date: None,
+                            purchase_date: holding.purchase_date,
                         },
                     )
                 }
@@ -152,7 +152,7 @@ pub fn write_file(file_name: Option<String>, portfolio: &Portfolio) -> Result<()
                         minor: holding.purchase_price.minor_part(),
                         currency_code: holding.purchase_price.currency.code(),
                     }),
-                    purchase_date: None,
+                    purchase_date: holding.purchase_date,
                 },
             })
             .collect(),

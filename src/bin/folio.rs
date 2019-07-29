@@ -2,11 +2,13 @@
 extern crate log;
 extern crate flexi_logger;
 
+use chrono::Local;
 use fin_model::prelude::*;
 use fin_model::provider::Provider;
 use fin_iex::IEXProvider;
 use steel_cent::currency::with_code;
 
+use portfolio::display::DATE_FMT;
 use portfolio::holdings::show_holdings;
 use portfolio::model;
 use portfolio::model::{Holding, Item, ModelError, Portfolio};
@@ -19,7 +21,7 @@ enum Command {
     Watch,
 
     Holdings,
-    Add(Symbol, Option<String>, Option<String>),
+    Add(Symbol, Option<String>, Option<String>, Option<String>),
     Remove(Symbol),
 
     None,
@@ -57,11 +59,11 @@ fn main() {
                         _ => (),
                     }
                 },
-                Command::Holdings | Command::Add(_, _, _) | Command::Remove(_) => {
+                Command::Holdings | Command::Add(_, _, _, _) | Command::Remove(_) => {
                     match cmd {
                         Command::Holdings =>
                             show_holdings(portfolio),
-                        Command::Add(s, p, q) => {
+                        Command::Add(s, p, q, d) => {
                             let p = match p {
                                 Some(p) => {
                                     let ps: Vec<&str> = p.split(".").collect();
@@ -76,7 +78,7 @@ fn main() {
                                             ps.get(0).unwrap().parse::<i32>().unwrap(),
                                             ps.get(1).unwrap().parse::<i32>().unwrap())
                                     } else {
-                                        println!("Could not parse price {}", p);
+                                        warn!("Could not parse price {}, using zero", p);
                                         Money::zero(default_currency)
                                     }
                                 },
@@ -86,18 +88,28 @@ fn main() {
                                 Some(q) => match q.parse::<u32>() {
                                     Ok(n) => n,
                                     Err(_) => {
-                                        println!("Could not parse quantity {}", q);
+                                        warn!("Could not parse quantity {}, using zero", q);
                                         0
                                     },
                                 }
                                 None => 0,
+                            };
+                            let d = match d {
+                                Some(d) => match Date::parse_from_str(&d, DATE_FMT) {
+                                    Ok(d) => Some(d),
+                                    Err(_) => {
+                                        warn!("Could not parse date {}, using today", d);
+                                        Some(Local::today().naive_local())
+                                    },
+                                }
+                                None => None,
                             };
                             let new_item = Item::Price(
                                 s,
                                 Holding {
                                     quantity: q,
                                     purchase_price: p,
-                                    purchase_date: None,
+                                    purchase_date: d,
                                 }
                             );
                             let new_portfolio = Portfolio {
@@ -185,6 +197,13 @@ fn handle_args() -> Command {
                         .help("The purchase price of the security"),
                 )
                 .arg(
+                    Arg::with_name("date")
+                        .short("d")
+                        .long("purchase-date")
+                        .takes_value(true)
+                        .help("The purchase date of the security (YYYY-MM-DD)"),
+                )
+                .arg(
                     Arg::with_name("symbol")
                         .help("The security symbol")
                         .required(true)
@@ -215,6 +234,10 @@ fn handle_args() -> Command {
                 None => None,
             },
             match matches.value_of("quantity") {
+                Some(s) => Some(s.to_string()),
+                None => None,
+            },
+            match matches.value_of("date") {
                 Some(s) => Some(s.to_string()),
                 None => None,
             },
