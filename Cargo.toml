@@ -3,6 +3,11 @@ name = "portfolio"
 version = "0.1.0"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
+description = "This crate provides a single binary, folio, which uses the rust-financial crates to fetch stock (and other securities) data for a local portfolio file."
+repository = "https://github.com/johnstonskj/portfolio.git"
+readme = "README.md"
+license = "MIT"
+keywords = ["financial", "stock", "quote", "terminal"]
 
 [[bin]]
 name = "folio"
